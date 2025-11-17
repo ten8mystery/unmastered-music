@@ -1,8 +1,8 @@
 {
-  "apiKey": "YOUR_API_KEY",
-  "authDomain": "YOUR_PROJECT.firebaseapp.com",
-  "projectId": "YOUR_PROJECT_ID",
-  "storageBucket": "YOUR_BUCKET.appspot.com",
-  "messagingSenderId": "YOUR_SENDER_ID",
-  "appId": "YOUR_APP_ID"
+  "apiKey": "AIzaSyDJ5eUFA9LiwJvL6du4gZNsHfJjlu126wQ",
+  "authDomain": "unmastered-music.firebaseapp.com",
+  "projectId": "unmastered-music",
+  "storageBucket": "unmastered-music.firebasestorage.app",
+  "messagingSenderId": "462137336340",
+  "appId": "1:462137336340:web:4ba2ea3892c485c6e9fd01"
 }
