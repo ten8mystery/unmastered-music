@@ -1,0 +1,51 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Unmastered — Login</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">Unmastered</div>
+      <nav class="nav"><a href="feed.html">Feed</a><a href="upload.html">Upload</a><a href="playlists.html">Playlists</a></nav>
+    </header>
+
+    <div class="card" id="authCard">
+      <h2>Welcome — sign in or create an account</h2>
+      <div class="row" style="margin-top:12px">
+        <input id="email" class="input" placeholder="Email">
+        <input id="password" class="input" placeholder="Password" type="password">
+        <button class="btn" id="loginBtn">Log in</button>
+        <button class="btn" id="signupBtn">Sign up</button>
+      </div>
+      <div id="authMsg" class="small" style="margin-top:12px"></div>
+      <div class="footer">Make sure to add your Firebase config to <code>config.json</code> before using the app.</div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', ()=> {
+  const loginBtn = document.getElementById('loginBtn');
+  const signupBtn = document.getElementById('signupBtn');
+  const authMsg = document.getElementById('authMsg');
+
+  loginBtn.onclick = async () => {
+    try {
+      await auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value);
+      window.location = 'feed.html';
+    } catch(e) { authMsg.textContent = e.message; }
+  };
+  signupBtn.onclick = async () => {
+    try {
+      await auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value);
+      window.location = 'feed.html';
+    } catch(e) { authMsg.textContent = e.message; }
+  };
+});
+</script>
+</body>
+</html>

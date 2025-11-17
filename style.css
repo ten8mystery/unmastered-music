@@ -1,0 +1,74 @@
+
+/* style.css — Modern Unmastered theme */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+:root{
+  --bg:#0b0b0f;
+  --card:#0f0f14;
+  --muted:#9aa4b2;
+  --accent:#7f5bff;
+  --accent-2:#a893ff;
+  --border:#1f1f24;
+  --radius:12px;
+  --glass: rgba(255,255,255,0.03);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background:linear-gradient(180deg,var(--bg),#060607);
+  color:#e6eef8;
+  -webkit-font-smoothing:antialiased;
+  padding:24px;
+  display:flex;
+  justify-content:center;
+}
+.container{width:980px}
+
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:18px;
+}
+.brand{
+  font-weight:800;
+  font-size:24px;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));
+  -webkit-background-clip:text;
+  color:transparent;
+}
+.nav a{color:var(--muted);text-decoration:none;margin-left:12px;font-weight:600}
+.nav a:hover{color:var(--accent-2)}
+
+.card{
+  background:linear-gradient(180deg,var(--card),#0b0b10);
+  border:1px solid var(--border);
+  padding:16px;
+  border-radius:var(--radius);
+  margin-bottom:14px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+}
+
+.row{display:flex;gap:12px;align-items:center}
+.input{width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:inherit}
+.btn{background:linear-gradient(90deg,var(--accent),var(--accent-2));border:none;color:white;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+.small{font-size:13px;color:var(--muted)}
+.song{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  border-top:1px solid rgba(255,255,255,0.02);
+  padding:12px 0;
+}
+.song:first-child{border-top:none}
+.song-meta{flex:1}
+.song-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.like-btn, .follow-btn {background:#0b0b0f;border:1px solid var(--border);padding:8px 10px;border-radius:10px;cursor:pointer;color:var(--muted)}
+.comment-box{margin-top:8px;background:rgba(255,255,255,0.02);padding:8px;border-radius:8px;border:1px solid var(--border)}
+.audio{width:100%;margin-top:8px}
+.tag{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:999px;font-size:12px;color:var(--muted)}
+.footer{margin-top:18px;font-size:13px;color:var(--muted)}
+@media(max-width:980px){.container{width:100%;padding:12px}}

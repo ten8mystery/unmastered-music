@@ -1,0 +1,63 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Unmastered — Artist</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">Unmastered</div>
+      <nav class="nav"><a href="feed.html">Feed</a><a href="upload.html">Upload</a><a href="playlists.html">Playlists</a><a href="profile.html">Profile</a></nav>
+      <div><span id="aEmail" class="small"></span><button class="btn" id="logoutA">Logout</button></div>
+    </header>
+
+    <div class="card">
+      <h2 id="artistName">Artist</h2>
+      <button class="follow-btn" id="followBtn">Follow</button>
+      <div id="artistSongs" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const artist = params.get('name') || '';
+document.getElementById('artistName').textContent = artist;
+
+auth.onAuthStateChanged(user=>{
+  if(!user) window.location='index.html';
+  else document.getElementById('aEmail').textContent = user.email;
+  document.getElementById('logoutA').onclick = ()=>auth.signOut().then(()=>window.location='index.html');
+  loadArtistSongs();
+  checkFollow();
+});
+
+async function loadArtistSongs(){
+  const snap = await db.collection('songs').where('artist','==',artist).orderBy('createdAt','desc').get();
+  const out = document.getElementById('artistSongs'); out.innerHTML = '';
+  snap.forEach(d=>{
+    const s = d.data();
+    const div = document.createElement('div'); div.className='song';
+    div.innerHTML = `<div class="song-meta"><strong>${s.title}</strong><div class="small">${s.artist}</div></div>
+                     <div class="song-actions"><audio class="audio" controls src="${s.url}"></audio></div>`;
+    out.appendChild(div);
+  });
+}
+
+async function checkFollow(){
+  const uid = auth.currentUser.uid;
+  const docId = uid + '_' + artist;
+  const ref = db.collection('following').doc(docId);
+  const doc = await ref.get();
+  document.getElementById('followBtn').textContent = doc.exists ? 'Following' : 'Follow';
+  document.getElementById('followBtn').onclick = async ()=>{
+    if (doc.exists) { await ref.delete(); document.getElementById('followBtn').textContent='Follow'; }
+    else { await ref.set({ uid, artist, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); document.getElementById('followBtn').textContent='Following'; }
+  };
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Unmastered — Feed</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">Unmastered</div>
+      <nav class="nav">
+        <a href="feed.html">Feed</a><a href="upload.html">Upload</a><a href="playlists.html">Playlists</a><a href="profile.html">Profile</a>
+      </nav>
+      <div>
+        <span id="userEmail" class="small"></span>
+        <button class="btn" id="logoutBtn">Logout</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3>Public Feed</h3>
+        <input id="search" class="input" placeholder="Search by title or artist" style="max-width:360px">
+      </div>
+      <div id="feedList" style="margin-top:12px"></div>
+    </div>
+
+    <div class="footer">Built with Firebase — replace config.json with your project settings.</div>
+  </div>
+
+<script>
+let unsubscribe = null;
+function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+auth.onAuthStateChanged(user => {
+  document.getElementById('userEmail').textContent = user ? user.email : '';
+  if (!user) {
+    // if not logged in, redirect to login
+    window.location = 'index.html';
+  } else {
+    loadFeed();
+  }
+  document.getElementById('logoutBtn').onclick = ()=>{ auth.signOut().then(()=>window.location='index.html'); };
+});
+
+function makeSongElement(doc) {
+  const d = Object.assign({id: doc.id}, doc.data());
+  const div = document.createElement('div');
+  div.className = 'song';
+  const meta = document.createElement('div'); meta.className = 'song-meta';
+  meta.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><strong>${escapeHtml(d.title)}</strong><div class="tag">${escapeHtml(d.artist)}</div></div>
+                    <div class="small">by ${escapeHtml(d.ownerEmail||'unknown')} • ${d.duration?d.duration+'s':''}</div>`;
+  const actions = document.createElement('div'); actions.className = 'song-actions';
+  const audio = document.createElement('audio'); audio.className='audio'; audio.controls=true; audio.src = d.url;
+  const likeBtn = document.createElement('button'); likeBtn.className='like-btn';
+  likeBtn.textContent = '♡ ' + (d.likes?d.likes.length:0);
+  likeBtn.onclick = async () => {
+    const uid = auth.currentUser.uid;
+    const ref = db.collection('songs').doc(d.id);
+    const liked = (d.likes||[]).includes(uid);
+    if (liked) await ref.update({ likes: firebase.firestore.FieldValue.arrayRemove(uid) });
+    else await ref.update({ likes: firebase.firestore.FieldValue.arrayUnion(uid) });
+  };
+  const commentToggle = document.createElement('button'); commentToggle.className='like-btn'; commentToggle.textContent='Comments';
+  const commentsDiv = document.createElement('div'); commentsDiv.className='comment-box';
+
+  commentToggle.onclick = async () => {
+    if (commentsDiv.innerHTML.trim()) { commentsDiv.innerHTML=''; return; }
+    commentsDiv.innerHTML = '<div class="small">Loading comments…</div>';
+    const q = await db.collection('songs').doc(d.id).collection('comments').orderBy('createdAt','asc').get();
+    commentsDiv.innerHTML = '';
+    q.forEach(cdoc=>{
+      const c = cdoc.data();
+      const el = document.createElement('div');
+      el.className='small';
+      el.style.marginBottom='8px';
+      el.innerHTML = `<strong>${escapeHtml(c.authorEmail)}</strong> · ${new Date(c.createdAt?.toDate?.()||c.createdAt||Date.now()).toLocaleString()}<div>${escapeHtml(c.text)}</div>`;
+      commentsDiv.appendChild(el);
+    });
+    // new comment input
+    const inpt = document.createElement('input'); inpt.className='input'; inpt.placeholder='Write a comment';
+    const post = document.createElement('button'); post.className='btn'; post.textContent='Post';
+    post.onclick = async () => {
+      if (!inpt.value.trim()) return;
+      await db.collection('songs').doc(d.id).collection('comments').add({
+        text: inpt.value.trim(),
+        authorUid: auth.currentUser.uid,
+        authorEmail: auth.currentUser.email,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      commentToggle.click(); // refresh
+    };
+    commentsDiv.appendChild(inpt); commentsDiv.appendChild(post);
+  };
+
+  const artistLink = document.createElement('a'); artistLink.href = 'artist.html?name='+encodeURIComponent(d.artist); artistLink.textContent='Artist page'; artistLink.className='small';
+  actions.appendChild(likeBtn);
+  actions.appendChild(commentToggle);
+  actions.appendChild(artistLink);
+  actions.appendChild(audio);
+
+  div.appendChild(meta); div.appendChild(actions);
+  return div;
+}
+
+function loadFeed(q='') {
+  if (unsubscribe) unsubscribe();
+  const feedList = document.getElementById('feedList');
+  feedList.innerHTML = '<div class="small">Loading…</div>';
+  unsubscribe = db.collection('songs').orderBy('createdAt','desc').onSnapshot(snap=>{
+    feedList.innerHTML = '';
+    if (snap.empty) { feedList.innerHTML = '<div class="small">No songs yet</div>'; return; }
+    snap.forEach(doc=>{
+      const el = makeSongElement(doc);
+      feedList.appendChild(el);
+    });
+  });
+}
+
+document.getElementById('search').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  if (!q) { loadFeed(); return; }
+  // simple client-side filter by re-querying Firestore isn't efficient — we'll client filter after fetching
+  db.collection('songs').orderBy('createdAt','desc').get().then(snap=>{
+    const feedList = document.getElementById('feedList');
+    feedList.innerHTML = '';
+    snap.forEach(doc=>{
+      const d = doc.data();
+      if ((d.title||'').toLowerCase().includes(q) || (d.artist||'').toLowerCase().includes(q)) {
+        feedList.appendChild(makeSongElement(doc));
+      }
+    });
+  });
+});
+</script>
+</body>
+</html>

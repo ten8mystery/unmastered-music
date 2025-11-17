@@ -1,0 +1,55 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Unmastered — Profile</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">Unmastered</div>
+      <nav class="nav"><a href="feed.html">Feed</a><a href="upload.html">Upload</a><a href="playlists.html">Playlists</a><a href="profile.html">Profile</a></nav>
+      <div><span id="meEmail" class="small"></span><button class="btn" id="logoutPr">Logout</button></div>
+    </header>
+
+    <div class="card">
+      <h3 id="profileTitle">Profile</h3>
+      <div id="yourSongs"></div>
+    </div>
+  </div>
+
+<script>
+auth.onAuthStateChanged(user=>{
+  if(!user) window.location='index.html';
+  else document.getElementById('meEmail').textContent = user.email;
+  document.getElementById('logoutPr').onclick = ()=>auth.signOut().then(()=>window.location='index.html');
+  loadYourSongs();
+});
+
+async function loadYourSongs(){
+  const uid = auth.currentUser.uid;
+  const snap = await db.collection('songs').where('ownerUid','==',uid).orderBy('createdAt','desc').get();
+  const container = document.getElementById('yourSongs'); container.innerHTML = '';
+  snap.forEach(d=>{
+    const s = d.data(); const div = document.createElement('div'); div.className='song';
+    div.innerHTML = `<div class="song-meta"><strong>${s.title}</strong><div class="small">${s.artist}</div></div>
+                     <div class="song-actions"><audio class="audio" controls src="${s.url}"></audio>
+                     <button class="btn" onclick="deleteSong('${d.id}','${s.storagePath}')">Delete</button></div>`;
+    container.appendChild(div);
+  });
+}
+
+async function deleteSong(id, storagePath){
+  if(!confirm('Delete this track?')) return;
+  try {
+    await storage.ref(storagePath).delete();
+    await db.collection('songs').doc(id).delete();
+    loadYourSongs();
+  } catch(e) { alert('Delete failed: ' + e.message); }
+}
+</script>
+</body>
+</html>

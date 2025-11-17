@@ -1,0 +1,72 @@
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Unmastered — Upload</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="firebase-init.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">Unmastered</div>
+      <nav class="nav"><a href="feed.html">Feed</a><a href="upload.html">Upload</a><a href="playlists.html">Playlists</a><a href="profile.html">Profile</a></nav>
+      <div><span id="uEmail" class="small"></span><button class="btn" id="logout">Logout</button></div>
+    </header>
+
+    <div class="card">
+      <h3>Upload a track</h3>
+      <div class="row">
+        <input id="artist" class="input" placeholder="Artist name">
+        <input id="title" class="input" placeholder="Title">
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input id="file" type="file" accept="audio/*">
+        <button class="btn" id="uploadBtn">Upload</button>
+      </div>
+      <div id="upMsg" class="small" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+<script>
+auth.onAuthStateChanged(user=>{
+  if(!user) window.location='index.html';
+  else { document.getElementById('uEmail').textContent = user.email; }
+  document.getElementById('logout').onclick = ()=>auth.signOut().then(()=>window.location='index.html');
+});
+
+document.getElementById('uploadBtn').onclick = async ()=>{
+  const f = document.getElementById('file').files[0];
+  if (!f) return alert('Pick a file');
+  const artist = document.getElementById('artist').value.trim() || 'Unknown Artist';
+  const title = document.getElementById('title').value.trim() || f.name;
+  const uid = auth.currentUser.uid;
+  const ts = Date.now();
+  const path = `songs/${uid}_${ts}_${f.name}`.replace(/\s+/g,'_');
+  const ref = storage.ref(path);
+  const upEl = document.getElementById('upMsg');
+  upEl.textContent = 'Uploading...';
+  try {
+    const task = ref.put(f);
+    task.on('state_changed', snap => {
+      const pct = Math.round((snap.bytesTransferred/snap.totalBytes)*100);
+      upEl.textContent = 'Uploading ' + pct + '%';
+    });
+    await task;
+    const url = await ref.getDownloadURL();
+    await db.collection('songs').add({
+      ownerUid: uid,
+      ownerEmail: auth.currentUser.email,
+      artist, title, url, storagePath: path,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      likes: []
+    });
+    upEl.textContent = 'Uploaded successfully';
+  } catch(e) {
+    upEl.textContent = 'Upload failed: ' + e.message;
+  }
+};
+</script>
+</body>
+</html>
